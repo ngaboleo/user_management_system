@@ -14,7 +14,7 @@ public class ResponseObject {
     public ResponseObject( Object object) {
         this.status = true;
         this.result = object;
-        this.message = messageService.translate(IMessageService.SUCCESSS);
+        this.message = messageService.translate(IMessageService.SUCCESS);
     }
 
     public ResponseObject(Exception exception) {

@@ -51,7 +51,7 @@ public class TokenUtil implements Serializable {
 
     public boolean validateToken(String token, UserDetails userDetails){
         final String username = getUsernameFromToken(token);
-        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token)));
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
     private boolean isTokenExpired(String token) {
