@@ -14,10 +14,11 @@ public interface IUserRepository extends JpaRepository<User, UUID> {
 
     Optional<User> findUserById(UUID id);
     List<User> findUsersByEmailOrPhoneNumber(String email, String phoneNumber);
-    List<User> findAllByRoleAndStatusOrderByFirstNameAsc(UUID roleId, Boolean isEnabled);
-    List<User> findAllByRoleAndStatusAndOfficeIdOrderByFirstNameAsc(UUID roleId, Boolean isEnabled, UUID officeId);
+    List<User> findUsersByRolesId(UUID id);
+    List<User> findAllByOfficeAndRolesAndIsEnabled(UUID roleId, Boolean isEnabled, UUID officeId);
     Optional<User> findUserByEmailIgnoreCaseAndOtp(String email, String otp);
     Page<User> findAll(Pageable pageable);
     Page<User> findAllByOfficeId(UUID officeId, Pageable pageable);
+
 
 }

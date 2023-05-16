@@ -30,6 +30,6 @@ public class UserDto {
     private Boolean isEnabled;
     @Enumerated(EnumType.STRING)
     private OtpChannel otpChannel;
-    private UUID role_id;
-    private UUID office_id;
+    private Office office;
+    private Set<Role> roles;
 }

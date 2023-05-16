@@ -13,7 +13,7 @@ public interface IUserService {
     ResponseObject updateUser(UUID userId, UserDto userDto);
     ResponseObject getAllUser(Integer pageNumber, Integer pageSize);
     ResponseObject findUserById(UUID id);
-    ResponseObject findActiveUsersByRole(UUID roleId);
+    ResponseObject findUsersByRole(UUID roleId);
     ResponseObject updatePassword(UpdatePasswordDto updatePasswordDto);
     ResponseObject resetPassword(String email, String otp);
     ResponseObject sendOtp(String email);

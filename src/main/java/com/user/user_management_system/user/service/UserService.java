@@ -12,6 +12,7 @@ import com.user.user_management_system.user.dto.UpdatePasswordDto;
 import com.user.user_management_system.user.dto.UserDto;
 import com.user.user_management_system.user.model.IUserRepository;
 import com.user.user_management_system.user.model.User;
+import com.user.user_management_system.util.PageObject;
 import com.user.user_management_system.util.ResponseObject;
 import com.user.user_management_system.util.TokenUtil;
 import jakarta.transaction.Transactional;
@@ -19,6 +20,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
@@ -53,7 +55,7 @@ public class UserService implements IUserService{
             if (validateUserDto(userDto)){
                 List<User> users = iUserRepository.findUsersByEmailOrPhoneNumber(userDto.getEmail(), userDto.getPhoneNumber());
                 if (users.isEmpty()){
-                    Optional<Office> optionalOffice = iOfficeRepository.findById(userDto.getOffice_id());
+                    Optional<Office> optionalOffice = iOfficeRepository.findById(userDto.getOffice().getId());
                     if (optionalOffice.isPresent()){
                         User currentUser = new User();
                         BeanUtils.copyProperties(userDto, currentUser);
@@ -81,8 +83,8 @@ public class UserService implements IUserService{
 
     private boolean validateUserDto(UserDto userDto) {
         EmailValidator emailValidator = EmailValidator.getInstance();
-        return !ObjectUtils.isEmpty(userDto.getFullName()) && !ObjectUtils.isEmpty(userDto.getRole_id())
-                && !ObjectUtils.isEmpty(userDto.getOffice_id()) && !ObjectUtils.isEmpty(userDto.getDocumentType())
+        return !ObjectUtils.isEmpty(userDto.getFullName()) && !ObjectUtils.isEmpty(userDto.getRoles())
+                && !ObjectUtils.isEmpty(userDto.getOffice().getId()) && !ObjectUtils.isEmpty(userDto.getDocumentType())
                 && !ObjectUtils.isEmpty(userDto.getDocumentId()) && !ObjectUtils.isEmpty(userDto.getJurisdictionLevel())
                 && !emailValidator.isValid(userDto.getEmail())
                 && !ObjectUtils.isEmpty(userDto.getPhoneNumber()) && userDto.getPhoneNumber().length() == 10;
@@ -151,6 +153,24 @@ public class UserService implements IUserService{
             if (!ObjectUtils.isEmpty(userDto.getFullName()) && !currentUser.getFullName().equals(userDto.getFullName())){
                 currentUser.setFullName(userDto.getFullName());
             }
+            if (!ObjectUtils.isEmpty(userDto.getDocumentType()) && !currentUser.getDocumentType().equals(userDto.getDocumentType())){
+                currentUser.setDocumentType(userDto.getDocumentType());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getDocumentId()) && !currentUser.getDocumentId().equals(userDto.getDocumentId())){
+                currentUser.setDocumentId(userDto.getDocumentId());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getJurisdictionLevel()) && !currentUser.getJurisdictionLevel().equals(userDto.getJurisdictionLevel())){
+                currentUser.setJurisdictionLevel(userDto.getJurisdictionLevel());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getPhoneNumber()) && !currentUser.getPhoneNumber().equals(userDto.getPhoneNumber())){
+                currentUser.setPhoneNumber(userDto.getPhoneNumber());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getOffice().getId()) && !currentUser.getOffice().equals(userDto.getOffice().getId())){
+                currentUser.setOffice(userDto.getOffice());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getRoles()) && !currentUser.getRoles().equals(userDto.getRoles())){
+                currentUser.setRoles(userDto.getRoles());
+            }
             return currentUser;
         }else {
             throw new HandleException(IMessageService.USER_NOT_ALLOWED);
@@ -159,16 +179,21 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseObject getAllUser(Integer pageNumber, Integer pageSize) {
-        return null;
+        try {
+            Page<User> users = iUserRepository.findAll(PageObject.getPageable(pageNumber, pageSize));
+            return new ResponseObject(users);
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
     }
 
     @Override
     public ResponseObject findUserById(UUID id) {
-        return null;
+        return new ResponseObject(iUserRepository.findUserById(id).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND)));
     }
 
     @Override
-    public ResponseObject findActiveUsersByRole(UUID roleId) {
+    public ResponseObject findUsersByRole(UUID roleId) {
         return null;
     }
 
