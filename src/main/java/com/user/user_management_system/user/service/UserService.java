@@ -120,7 +120,41 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseObject updateUser(UUID userId, UserDto userDto) {
-        return null;
+        try {
+            Optional<User> optionalUser = iUserRepository.findUserById(userId);
+            if (optionalUser.isPresent() && !ObjectUtils.isEmpty(userDto.getEmail())){
+                User updateUser = setUpdatedUser(userDto, optionalUser.get());
+                return new ResponseObject(iUserRepository.save(updateUser));
+            }else {
+                return new ResponseObject(IMessageService.USER_NOT_FOUND);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+
+    }
+
+    private User setUpdatedUser(UserDto userDto, User user) {
+        User currentUser = iUserRepository.findUserByEmailIgnoreCase(userDto.getEmail()).orElseThrow(() -> new HandleException(IMessageService.USERNAME_NOT_FOUND));
+        if (currentUser.getId().equals(user.getId()) || currentUser.getRoles().equals(user.getRoles())){
+            EmailValidator emailValidator = EmailValidator.getInstance();
+            if (!ObjectUtils.isEmpty(userDto.getEmail()) && emailValidator.isValid(userDto.getEmail())){
+                if (!ObjectUtils.isEmpty(currentUser.getEmail())){
+                    if (!currentUser.getEmail().equals(userDto.getEmail())){
+                        currentUser.setEmail(userDto.getEmail());
+                    }
+                }else {
+                    currentUser.setEmail(userDto.getEmail());
+                }
+                currentUser.setEmail(userDto.getEmail());
+            }
+            if (!ObjectUtils.isEmpty(userDto.getFullName()) && !currentUser.getFullName().equals(userDto.getFullName())){
+                currentUser.setFullName(userDto.getFullName());
+            }
+            return currentUser;
+        }else {
+            throw new HandleException(IMessageService.USER_NOT_ALLOWED);
+        }
     }
 
     @Override
