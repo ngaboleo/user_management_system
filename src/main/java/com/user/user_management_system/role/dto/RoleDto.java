@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
@@ -14,7 +15,7 @@ import java.util.Set;
 public class RoleDto {
     private String roleName;
     private String roleDescription;
-    private Boolean roleStatus;
+    private Boolean status;
     private Date roleValidityPeriod;
-    private Set<Permission> permissions;
+    private Set<UUID> permissionsUuid;
 }

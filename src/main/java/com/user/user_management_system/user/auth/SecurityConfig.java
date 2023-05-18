@@ -35,11 +35,10 @@ public class SecurityConfig{
 
         http.cors().and().csrf().disable().
                 authorizeHttpRequests()
-                    .requestMatchers("/public/**").permitAll()
+                    .requestMatchers("/admin/**").permitAll()
+                .requestMatchers("/office/**", "/permission/**", "/role/**").permitAll()
                     .anyRequest().authenticated()
                 .and()
-                    .formLogin()
-                    .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .and()
                                 .authenticationProvider(authenticationProvider());

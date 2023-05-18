@@ -3,11 +3,14 @@ package com.user.user_management_system.util;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
@@ -46,7 +49,7 @@ public class TokenUtil implements Serializable {
         return Jwts.builder().setSubject(userDetails.getUsername()).setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + tokenValidity * 1000))
                 .claim("role", userDetails.getAuthorities().toArray()[0].toString())
-                .signWith(SignatureAlgorithm.HS512, secret).compact();
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
     }
 
     public boolean validateToken(String token, UserDetails userDetails){
@@ -57,5 +60,10 @@ public class TokenUtil implements Serializable {
     private boolean isTokenExpired(String token) {
         final Date expiration = getExpirationDateFromToken(token);
         return expiration.before(new Date());
+    }
+
+    private Key getSigningKey() {
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 }

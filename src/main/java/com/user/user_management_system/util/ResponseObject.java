@@ -9,18 +9,18 @@ public class ResponseObject {
     private Object result;
     private String message;
 
-    private static IMessageService messageService;
+    static IMessageService messageService ;
 
     public ResponseObject( Object object) {
         this.status = true;
         this.result = object;
-        this.message = messageService.translate(IMessageService.SUCCESS);
+        this.message = IMessageService.SUCCESS;
     }
 
     public ResponseObject(Exception exception) {
         this.status = false;
         this.result = exception.getStackTrace();
-        this.message = messageService.translate(exception.getMessage());
+        this.message = exception.getMessage();
     }
 
 

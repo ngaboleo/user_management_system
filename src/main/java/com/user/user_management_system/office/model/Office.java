@@ -1,5 +1,6 @@
 package com.user.user_management_system.office.model;
 
+import com.user.user_management_system.common.CommonUser;
 import com.user.user_management_system.user.model.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -14,12 +15,11 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "offices")
-public class Office {
+public class Office extends CommonUser {
     @Id
     @GeneratedValue
     private UUID id;
     private String officeName;
     private String officeLocation;
-    @OneToMany(mappedBy = "office")
-    private Set<User> users = new HashSet<>();
+
 }

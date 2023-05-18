@@ -1,5 +1,6 @@
 package com.user.user_management_system.user.model;
 
+import com.user.user_management_system.common.CommonUser;
 import com.user.user_management_system.office.model.Office;
 import com.user.user_management_system.role.model.Role;
 import com.user.user_management_system.util.OtpChannel;
@@ -21,7 +22,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "users")
-public class User {
+public class User extends CommonUser {
     @Id
     @GeneratedValue
     private UUID id;
@@ -35,17 +36,11 @@ public class User {
     private String documentId;
     private String documentType;
     private String jurisdictionLevel;
-    private Boolean isActive = false ;
     private Boolean isEnabled;
     @Enumerated(EnumType.STRING)
     private OtpChannel otpChannel;
-    @CreationTimestamp
-    private Date createdAt;
-    @UpdateTimestamp
-    private Date updateAt;
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(name = "user_role", joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "role_id"))
+    @ManyToMany
+    @JoinColumn(name = "role_id")
     private Set<Role> roles = new HashSet<>();
     @ManyToOne
     @JoinColumn(name = "office_id")

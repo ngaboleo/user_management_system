@@ -2,8 +2,11 @@ package com.user.user_management_system.user.service;
 
 import com.user.user_management_system.Message.IMessageService;
 import com.user.user_management_system.exception.HandleException;
+import com.user.user_management_system.notification.INotificationService;
+import com.user.user_management_system.notification.NotificationService;
 import com.user.user_management_system.office.model.IOfficeRepository;
 import com.user.user_management_system.office.model.Office;
+import com.user.user_management_system.role.model.IRoleRepository;
 import com.user.user_management_system.role.model.Role;
 import com.user.user_management_system.user.auth.UserImplDetailService;
 import com.user.user_management_system.user.dto.LoginRequest;
@@ -17,6 +20,7 @@ import com.user.user_management_system.util.ResponseObject;
 import com.user.user_management_system.util.TokenUtil;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +33,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -42,29 +43,50 @@ public class UserService implements IUserService{
     @Autowired
     private IOfficeRepository iOfficeRepository;
     @Autowired
+    private IRoleRepository iRoleRepository;
+    @Autowired
     private TokenUtil tokenUtil;
     @Autowired
     private UserImplDetailService userImplDetailService;
+    @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
     private AuthenticationManager authenticationManager;
-    private Office office;
-    private Set<Role> roles;
+    @Autowired
+    private NotificationService notificationService;
+    private Set<Role> roles = new HashSet<>();
+
+
+
     @Override
     public ResponseObject createUser(UserDto userDto) {
+        // validate user given data
+        // find user using email or phone and check if they exist
+        // find office provided by user and check if it is available or present in database
+        // set user data to user object and save
         try {
             if (validateUserDto(userDto)){
                 List<User> users = iUserRepository.findUsersByEmailOrPhoneNumber(userDto.getEmail(), userDto.getPhoneNumber());
                 if (users.isEmpty()){
-                    Optional<Office> optionalOffice = iOfficeRepository.findById(userDto.getOffice().getId());
+                    Optional<Office> optionalOffice = iOfficeRepository.findById(userDto.getOfficeId());
                     if (optionalOffice.isPresent()){
+                        for (UUID roleId: userDto.getRoles()) {
+                            Optional<Role> optionalRole = iRoleRepository.findById(roleId);
+                            roles.add(optionalRole.get());
+                        }
                         User currentUser = new User();
                         BeanUtils.copyProperties(userDto, currentUser);
-                        currentUser.setOffice(office);
+                        currentUser.setIsActive(false);
+                        currentUser.setOffice(optionalOffice.get());
                         currentUser.setRoles(roles);
-                        currentUser.setPassword(passwordEncoder.encode(userDto.getPassword()));
+                        String randomPassword = generateRandomSpecialCharacters(10);
+                        System.out.println(randomPassword);
+                        currentUser.setPassword(passwordEncoder.encode(randomPassword));
                         User userSaved = iUserRepository.save(currentUser);
 
                         // to do message and send email
+                        notificationService.sendEmail(userDto.getEmail(),"activate the account", "temporary password"+randomPassword);
+
 
                         return new ResponseObject(userSaved);
                     }else {
@@ -81,13 +103,19 @@ public class UserService implements IUserService{
         }
     }
 
+    public String generateRandomSpecialCharacters(int length) {
+        RandomStringGenerator pwdGenerator = new RandomStringGenerator.Builder().withinRange(33, 45)
+                .build();
+        return pwdGenerator.generate(length);
+    }
+
     private boolean validateUserDto(UserDto userDto) {
         EmailValidator emailValidator = EmailValidator.getInstance();
-        return !ObjectUtils.isEmpty(userDto.getFullName()) && !ObjectUtils.isEmpty(userDto.getRoles())
-                && !ObjectUtils.isEmpty(userDto.getOffice().getId()) && !ObjectUtils.isEmpty(userDto.getDocumentType())
-                && !ObjectUtils.isEmpty(userDto.getDocumentId()) && !ObjectUtils.isEmpty(userDto.getJurisdictionLevel())
-                && !emailValidator.isValid(userDto.getEmail())
-                && !ObjectUtils.isEmpty(userDto.getPhoneNumber()) && userDto.getPhoneNumber().length() == 10;
+        return  ObjectUtils.isNotEmpty(userDto.getFullName()) &&  ObjectUtils.isNotEmpty(userDto.getRoles())
+                && ObjectUtils.isNotEmpty(userDto.getDocumentType())
+                && ObjectUtils.isNotEmpty(userDto.getJurisdictionLevel())
+                && emailValidator.isValid(userDto.getEmail())
+                && ObjectUtils.isNotEmpty(userDto.getPhoneNumber()) && userDto.getPhoneNumber().length() == 10;
     }
 
     @Override
@@ -99,15 +127,36 @@ public class UserService implements IUserService{
             //extract user info
             Optional<User> optionalUser = iUserRepository.findUserByEmailIgnoreCase(loginRequest.getEmail());
             if (optionalUser.isPresent()){
-                final String token = tokenUtil.generateToken(userDetails);
                 User loggedUser = optionalUser.get();
-                return new ResponseObject(new LoginResponseDto(token, loggedUser));
+                if (loggedUser.getIsActive()){
+                    final String token = tokenUtil.generateToken(userDetails);
+                    return new ResponseObject(new LoginResponseDto(token, loggedUser));
+                }else {
+                    return new ResponseObject("Please active this account!!" +loggedUser.getEmail());
+                }
             }else {
                 throw new HandleException("user not found");
             }
         }catch (Exception ex){
             throw new HandleException(ex);
         }
+    }
+
+    @Override
+    public ResponseObject activateAccount(String email, String password) {
+        try {
+            Optional<User> optionalUser = iUserRepository.findUserByEmailIgnoreCase(email);
+            User user = optionalUser.get();
+            if (!user.getIsActive()){
+                user.setPassword(passwordEncoder.encode(password));
+                user.setIsActive(true);
+                iUserRepository.save(user);
+            }
+            return login(new LoginRequest(email, password));
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+
     }
 
     private void authenticate(String email, String password) {
@@ -121,15 +170,23 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public ResponseObject updateUser(UUID userId, UserDto userDto) {
+    public ResponseObject editUser(UUID userId, UserDto userDto) {
         try {
             Optional<User> optionalUser = iUserRepository.findUserById(userId);
-            if (optionalUser.isPresent() && !ObjectUtils.isEmpty(userDto.getEmail())){
-                User updateUser = setUpdatedUser(userDto, optionalUser.get());
-                return new ResponseObject(iUserRepository.save(updateUser));
+            User user = optionalUser.get();
+            if (user.getIsActive()){
+                user.setPhoneNumber(userDto.getPhoneNumber());
+                user.setJurisdictionLevel(userDto.getJurisdictionLevel());
+                for (UUID roleId: userDto.getRoles()) {
+                    Optional<Role> optionalRole = iRoleRepository.findById(roleId);
+                    roles.add(optionalRole.get());
+                }
+                user.setRoles(roles);
             }else {
-                return new ResponseObject(IMessageService.USER_NOT_FOUND);
+                user.setEmail(userDto.getEmail());
+                user.setDocumentId(userDto.getDocumentId());
             }
+            return new ResponseObject(iUserRepository.save(user));
         }catch (Exception exception){
             throw new HandleException(exception);
         }
@@ -139,37 +196,8 @@ public class UserService implements IUserService{
     private User setUpdatedUser(UserDto userDto, User user) {
         User currentUser = iUserRepository.findUserByEmailIgnoreCase(userDto.getEmail()).orElseThrow(() -> new HandleException(IMessageService.USERNAME_NOT_FOUND));
         if (currentUser.getId().equals(user.getId()) || currentUser.getRoles().equals(user.getRoles())){
-            EmailValidator emailValidator = EmailValidator.getInstance();
-            if (!ObjectUtils.isEmpty(userDto.getEmail()) && emailValidator.isValid(userDto.getEmail())){
-                if (!ObjectUtils.isEmpty(currentUser.getEmail())){
-                    if (!currentUser.getEmail().equals(userDto.getEmail())){
-                        currentUser.setEmail(userDto.getEmail());
-                    }
-                }else {
-                    currentUser.setEmail(userDto.getEmail());
-                }
-                currentUser.setEmail(userDto.getEmail());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getFullName()) && !currentUser.getFullName().equals(userDto.getFullName())){
-                currentUser.setFullName(userDto.getFullName());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getDocumentType()) && !currentUser.getDocumentType().equals(userDto.getDocumentType())){
-                currentUser.setDocumentType(userDto.getDocumentType());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getDocumentId()) && !currentUser.getDocumentId().equals(userDto.getDocumentId())){
-                currentUser.setDocumentId(userDto.getDocumentId());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getJurisdictionLevel()) && !currentUser.getJurisdictionLevel().equals(userDto.getJurisdictionLevel())){
-                currentUser.setJurisdictionLevel(userDto.getJurisdictionLevel());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getPhoneNumber()) && !currentUser.getPhoneNumber().equals(userDto.getPhoneNumber())){
-                currentUser.setPhoneNumber(userDto.getPhoneNumber());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getOffice().getId()) && !currentUser.getOffice().equals(userDto.getOffice().getId())){
-                currentUser.setOffice(userDto.getOffice());
-            }
-            if (!ObjectUtils.isEmpty(userDto.getRoles()) && !currentUser.getRoles().equals(userDto.getRoles())){
-                currentUser.setRoles(userDto.getRoles());
+            if (validateUserDto(userDto)){
+                BeanUtils.copyProperties(userDto, currentUser);
             }
             return currentUser;
         }else {

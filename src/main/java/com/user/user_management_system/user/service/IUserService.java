@@ -10,7 +10,8 @@ import java.util.UUID;
 public interface IUserService {
     ResponseObject createUser(UserDto userDto);
     ResponseObject login(LoginRequest loginRequest);
-    ResponseObject updateUser(UUID userId, UserDto userDto);
+    ResponseObject editUser(UUID userId, UserDto userDto);
+    ResponseObject activateAccount(String email, String password);
     ResponseObject getAllUser(Integer pageNumber, Integer pageSize);
     ResponseObject findUserById(UUID id);
     ResponseObject findUsersByRole(UUID roleId);

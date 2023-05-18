@@ -21,15 +21,15 @@ import java.util.UUID;
 public class UserDto {
     private String fullName;
     private String email;
-    private String password;
     private String phoneNumber;
     private String otp;
     private String documentId;
     private String documentType;
     private String jurisdictionLevel;
     private Boolean isEnabled;
+    private Boolean isActive;
     @Enumerated(EnumType.STRING)
     private OtpChannel otpChannel;
-    private Office office;
-    private Set<Role> roles;
+    private UUID officeId;
+    private Set<UUID> roles;
 }
