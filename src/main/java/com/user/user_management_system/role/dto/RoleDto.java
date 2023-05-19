@@ -15,7 +15,7 @@ import java.util.UUID;
 public class RoleDto {
     private String roleName;
     private String roleDescription;
-    private Boolean status;
+    private Boolean isActive;
     private Date roleValidityPeriod;
     private Set<UUID> permissionsUuid;
 }

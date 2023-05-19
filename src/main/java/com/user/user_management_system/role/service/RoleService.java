@@ -1,16 +1,19 @@
 package com.user.user_management_system.role.service;
 
+import com.user.user_management_system.Message.IMessageService;
 import com.user.user_management_system.exception.HandleException;
 import com.user.user_management_system.permission.model.IPermissionRepository;
 import com.user.user_management_system.permission.model.Permission;
 import com.user.user_management_system.role.dto.RoleDto;
 import com.user.user_management_system.role.model.IRoleRepository;
 import com.user.user_management_system.role.model.Role;
+import com.user.user_management_system.util.PageObject;
 import com.user.user_management_system.util.ResponseObject;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -38,7 +41,7 @@ public class RoleService implements IRoleService {
         // set object permissions to a role
         try {
             for (UUID permissionId: roleDto.getPermissionsUuid()) {
-                Optional<Permission> optionalPermission = iPermissionRepository.findById(permissionId);
+                Optional<Permission> optionalPermission = iPermissionRepository.findPermissionById(permissionId);
                 permissions.add(optionalPermission.get());
             }
             Role role = new Role();
@@ -54,15 +57,16 @@ public class RoleService implements IRoleService {
     @Override
     public ResponseObject updateRole(UUID role_id, RoleDto roleDto) {
         try {
-            Optional<Role> optionalRole = iRoleRepository.findById(role_id);
+            Optional<Role> optionalRole = iRoleRepository.findRoleById(role_id);
+            Role role = optionalRole.get();
             if (optionalRole.isPresent()){
-                Role role = new Role();
+                for (UUID permissionId: roleDto.getPermissionsUuid()) {
+                    Optional<Permission> optionalPermission = iPermissionRepository.findPermissionById(permissionId);
+                    permissions.add(optionalPermission.get());
+                }
                 BeanUtils.copyProperties(roleDto, role);
-//                role.setRoleName(role.getRoleName());
-//                role.setRoleDescription(roleDto.getRoleDescription());
-//                role.setStatus(roleDto.getStatus());
-//                role.setRoleValidityPeriod(roleDto.getRoleValidityPeriod());
-//                role.setPermissions());
+                role.setIsActive(roleDto.getIsActive());
+                role.setPermissions(permissions);
                 return new ResponseObject(iRoleRepository.save(role));
             }else {
                 throw new HandleException("role does not exist");
@@ -74,6 +78,28 @@ public class RoleService implements IRoleService {
 
     @Override
     public ResponseObject getAllRoles(Integer pageNumber, Integer pageSize) {
-        return null;
+
+        try {
+            Page<Role> roles = iRoleRepository.findAll(PageObject.getPageable(pageNumber, pageSize));
+            return new ResponseObject(roles);
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject disableRole(UUID id, RoleDto roleDto) {
+        try {
+            Optional<Role> optionalRole = iRoleRepository.findRoleById(id);
+            Role role = optionalRole.get();
+            if (role.getId() != id){
+                role.setIsActive(roleDto.getIsActive());
+                return new ResponseObject(iRoleRepository.save(role));
+            }else {
+                return new ResponseObject(IMessageService.ROLE_NOT_FOUND);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
     }
 }

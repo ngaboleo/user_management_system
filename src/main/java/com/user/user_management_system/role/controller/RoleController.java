@@ -29,4 +29,22 @@ public class RoleController {
             return new ResponseObject(exception);
         }
     }
+
+    @GetMapping("/all")
+    public ResponseObject getAllRoles(@RequestHeader Integer pageNumber, @RequestHeader Integer pageSize){
+        try {
+            return iRoleService.getAllRoles(pageNumber, pageSize);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
+
+    @PutMapping("/disable")
+    public ResponseObject disableRole(@RequestHeader UUID id, @RequestBody RoleDto roleDto){
+        try {
+            return iRoleService.disableRole(id, roleDto);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

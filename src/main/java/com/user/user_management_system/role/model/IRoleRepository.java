@@ -7,5 +7,5 @@ import java.util.Optional;
 import java.util.UUID;
 @Repository
 public interface IRoleRepository extends JpaRepository<Role, UUID> {
-   Optional<Role> findById(UUID id);
+   Optional<Role> findRoleById(UUID id);
 }
