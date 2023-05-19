@@ -47,4 +47,28 @@ public class UserController {
             return new ResponseObject(exception);
         }
     }
+    @GetMapping("/user/all")
+    public ResponseObject getAllUser(@RequestHeader Integer pageNUmber, @RequestHeader Integer pageSize){
+        try {
+            return userService.getAllUser(pageNUmber, pageSize);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
+    @GetMapping("/user/id")
+    public ResponseObject findUserById(@RequestHeader UUID id){
+        try {
+            return userService.findUserById(id);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
+    @GetMapping("/user/roleId")
+    public ResponseObject findUsersROle(@RequestParam UUID id){
+        try {
+            return userService.findUsersByRole(id);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

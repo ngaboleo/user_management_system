@@ -3,6 +3,8 @@ package com.user.user_management_system.user.model;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,12 +15,11 @@ public interface IUserRepository extends JpaRepository<User, UUID> {
     Optional<User> findUserByEmailIgnoreCase(String email);
 
     Optional<User> findUserById(UUID id);
-    List<User> findUsersByEmailOrPhoneNumber(String email, String phoneNumber);
-    List<User> findUsersByRolesId(UUID id);
-    List<User> findAllByOfficeAndRolesAndIsEnabled(UUID roleId, Boolean isEnabled, UUID officeId);
-    Optional<User> findUserByEmailIgnoreCaseAndOtp(String email, String otp);
+    @Query("SELECT u FROM User u WHERE u.email = :email OR u.phoneNumber = :phoneNumber")
+    List<User> findUsersByEmailOrPhoneNumber(@Param("email") String email, @Param("phoneNumber") String phoneNumber);
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.id= :roleId")
+    List<User> findUsersByRolesId(@Param("roleId") UUID roleId);
     Page<User> findAll(Pageable pageable);
-    Page<User> findAllByOfficeId(UUID officeId, Pageable pageable);
 
 
 }

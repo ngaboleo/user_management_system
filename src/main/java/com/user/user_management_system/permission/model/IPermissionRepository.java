@@ -8,5 +8,5 @@ import java.util.Set;
 import java.util.UUID;
 @Repository
 public interface IPermissionRepository extends JpaRepository<Permission, UUID> {
-    Optional<Permission> findById(UUID id);
+    Optional<Permission> findPermissionById(UUID id);
 }

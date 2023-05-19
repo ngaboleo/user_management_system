@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class PermissionDto {
     private String permissionName;
-    private Boolean status;
+    private Boolean isActive;
 }

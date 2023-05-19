@@ -193,18 +193,6 @@ public class UserService implements IUserService{
 
     }
 
-    private User setUpdatedUser(UserDto userDto, User user) {
-        User currentUser = iUserRepository.findUserByEmailIgnoreCase(userDto.getEmail()).orElseThrow(() -> new HandleException(IMessageService.USERNAME_NOT_FOUND));
-        if (currentUser.getId().equals(user.getId()) || currentUser.getRoles().equals(user.getRoles())){
-            if (validateUserDto(userDto)){
-                BeanUtils.copyProperties(userDto, currentUser);
-            }
-            return currentUser;
-        }else {
-            throw new HandleException(IMessageService.USER_NOT_ALLOWED);
-        }
-    }
-
     @Override
     public ResponseObject getAllUser(Integer pageNumber, Integer pageSize) {
         try {
@@ -222,7 +210,11 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseObject findUsersByRole(UUID roleId) {
-        return null;
+        try {
+            return new ResponseObject(iUserRepository.findUsersByRolesId(roleId));
+        }catch (Exception exception){
+            throw new HandleException(IMessageService.ROLE_NOT_FOUND);
+        }
     }
 
     @Override
