@@ -2,8 +2,7 @@ package com.user.user_management_system.user.service;
 
 import com.user.user_management_system.Message.IMessageService;
 import com.user.user_management_system.exception.HandleException;
-import com.user.user_management_system.notification.INotificationService;
-import com.user.user_management_system.notification.NotificationService;
+import com.user.user_management_system.notification.IEmailSenderService;
 import com.user.user_management_system.office.model.IOfficeRepository;
 import com.user.user_management_system.office.model.Office;
 import com.user.user_management_system.role.model.IRoleRepository;
@@ -13,13 +12,16 @@ import com.user.user_management_system.user.dto.LoginRequest;
 import com.user.user_management_system.user.dto.LoginResponseDto;
 import com.user.user_management_system.user.dto.UpdatePasswordDto;
 import com.user.user_management_system.user.dto.UserDto;
+import com.user.user_management_system.user.model.IResetLinkerRepository;
 import com.user.user_management_system.user.model.IUserRepository;
+import com.user.user_management_system.user.model.ResetLinker;
 import com.user.user_management_system.user.model.User;
 import com.user.user_management_system.util.PageObject;
 import com.user.user_management_system.util.ResponseObject;
 import com.user.user_management_system.util.TokenUtil;
 import jakarta.transaction.Transactional;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.text.RandomStringGenerator;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.BeanUtils;
@@ -32,8 +34,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.*;
+import java.util.random.RandomGenerator;
 
 @Service
 @Transactional
@@ -53,7 +57,9 @@ public class UserService implements IUserService{
     @Autowired
     private AuthenticationManager authenticationManager;
     @Autowired
-    private NotificationService notificationService;
+    private IEmailSenderService iEmailSenderService;
+    @Autowired
+    private IResetLinkerRepository iResetLinkerRepository;
     private Set<Role> roles = new HashSet<>();
 
 
@@ -79,21 +85,21 @@ public class UserService implements IUserService{
                         currentUser.setIsActive(false);
                         currentUser.setOffice(optionalOffice.get());
                         currentUser.setRoles(roles);
-                        String randomPassword = generateRandomSpecialCharacters(10);
+                        String randomPassword = RandomStringUtils.randomAlphabetic(26);
                         System.out.println(randomPassword);
                         currentUser.setPassword(passwordEncoder.encode(randomPassword));
                         User userSaved = iUserRepository.save(currentUser);
 
                         // to do message and send email
-                        notificationService.sendEmail(userDto.getEmail(),"activate the account", "temporary password"+randomPassword);
-
+//                        notificationService.sendEmail(userDto.getEmail(),"activate the account", "temporary password"+randomPassword);
+                        iEmailSenderService.sendEmail(userDto.getEmail(),"activate the account", "temporary password: "+randomPassword);
 
                         return new ResponseObject(userSaved);
                     }else {
                         throw new HandleException("invalid office id");
                     }
                 }else {
-                    throw new HandleException("email already exists");
+                     throw new HandleException("email already exists");
                 }
             }else {
                 throw new HandleException("required user information is missing");
@@ -223,8 +229,45 @@ public class UserService implements IUserService{
     }
 
     @Override
-    public ResponseObject resetPassword(String email, String otp) {
-        return null;
+    public ResponseObject resetPassword(String email) {
+        try {
+            Optional<User> optionalUser = iUserRepository.findUserByEmailIgnoreCase(email);
+            if (optionalUser.isPresent()){
+                ResetLinker resetLinker = new ResetLinker();
+//                random string for token generate
+                String token = RandomStringUtils.randomAlphabetic(26);
+                resetLinker.setToken(token.toString());
+                resetLinker.setUser(optionalUser.get());
+                iResetLinkerRepository.save(resetLinker);
+                iEmailSenderService.sendEmail(email,"Reset password link",
+                        "http://localhost:8080/confirm-account?token= " +resetLinker.getToken());
+                return new ResponseObject(resetLinker);
+
+            }else {
+                throw new HandleException(IMessageService.USER_NOT_FOUND);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject changePassword(String token, String newPassword) {
+        try {
+            Optional<ResetLinker> resetLinkerOptional = iResetLinkerRepository.findResetLinkerByTokenIgnoreCase(token);
+            if (resetLinkerOptional.isPresent()){
+                Optional<User> userOptional = iUserRepository.findUserById(resetLinkerOptional.get().getUser().getId());
+                User user = userOptional.get();
+                user.setPassword(passwordEncoder.encode(newPassword));
+                iUserRepository.save(user);
+                iEmailSenderService.sendEmail(user.getEmail(), "Password Reset successfully", "Dear " +user.getFullName()+", your password has been reset successfully");
+                return new ResponseObject(user);
+            }else {
+                throw new HandleException(IMessageService.TOKEN_NOT_VALID);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
     }
 
     @Override

@@ -71,4 +71,20 @@ public class UserController {
             return new ResponseObject(exception);
         }
     }
+    @PostMapping("/user/resetPassword")
+    public ResponseObject resetPassword(@RequestHeader String email){
+        try {
+            return userService.resetPassword(email);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
+    @PutMapping("/user/changePassword")
+    public ResponseObject changePassword(@RequestHeader String token, @RequestHeader String newPassword){
+        try {
+            return userService.changePassword(token, newPassword);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

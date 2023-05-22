@@ -9,6 +9,8 @@ public interface IMessageService {
     String USER_NOT_FOUND = "user.notFound";
     String ROLE_NOT_FOUND = "role.notFound";
     String PERMISSION_NOT_FOUND= "permission.notFound";
+    String EMAIL_SEND = "email.sent.successfully";
+    String TOKEN_NOT_VALID = "token.not.valid";
 
     String translate(String message);
 }

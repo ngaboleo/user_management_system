@@ -16,7 +16,8 @@ public interface IUserService {
     ResponseObject findUserById(UUID id);
     ResponseObject findUsersByRole(UUID roleId);
     ResponseObject updatePassword(UpdatePasswordDto updatePasswordDto);
-    ResponseObject resetPassword(String email, String otp);
+    ResponseObject resetPassword(String email);
+    ResponseObject changePassword(String token, String newPassword);
     ResponseObject sendOtp(String email);
     ResponseObject findAllUsersByOffice(UUID officeId, Integer pageNumber, Integer pageSize);
 }
