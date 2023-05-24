@@ -37,6 +37,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -260,11 +261,12 @@ public class UserService implements IUserService{
     @Override
     public ResponseObject changePassword(String token, String newPassword) {
         try {
-            LocalDateTime expirationDateTime = LocalDateTime.now().plusMinutes(expirationDate);
-            Date tokenExpirationDate = Date.from(expirationDateTime.atZone(ZoneId.systemDefault()).toInstant());
-            Date currentDateTime = new Date();
             Optional<ResetLinker> resetLinkerOptional = iResetLinkerRepository.findResetLinkerByTokenIgnoreCase(token);
-            if (resetLinkerOptional.isPresent() && tokenExpirationDate.after(currentDateTime)){
+            Date createAt = resetLinkerOptional.get().getCreatedAt();
+            Date expirationForToken = Date.from(createAt.toInstant().plus(Duration.ofMinutes(expirationDate)));
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            Date currentTime = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            if (resetLinkerOptional.isPresent() && expirationForToken.before(currentTime)){
                 Optional<User> userOptional = iUserRepository.findUserById(resetLinkerOptional.get().getUser().getId());
                 User user = userOptional.get();
                 user.setPassword(passwordEncoder.encode(newPassword));
