@@ -20,6 +20,7 @@ public interface IUserRepository extends JpaRepository<User, UUID> {
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.id= :roleId")
     List<User> findUsersByRolesId(@Param("roleId") UUID roleId);
     Page<User> findAll(Pageable pageable);
+    List<User> findByFullNameContainingIgnoreCase(String keyword);
 
 
 }

@@ -45,4 +45,12 @@ public class PermissionController {
             return new ResponseObject(exception);
         }
     }
+    @GetMapping("/search")
+    public ResponseObject searchPermission(@RequestParam String keyword){
+        try {
+            return iPermissionService.searchPermission(keyword);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

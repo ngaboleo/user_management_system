@@ -87,4 +87,13 @@ public class UserController {
             return new ResponseObject(exception);
         }
     }
+
+    @GetMapping("/user/search")
+    public ResponseObject userSearch(@RequestParam String keyword){
+        try {
+            return userService.userSearch(keyword);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

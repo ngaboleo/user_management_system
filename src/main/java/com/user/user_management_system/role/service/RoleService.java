@@ -16,10 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @Transactional
@@ -98,6 +95,16 @@ public class RoleService implements IRoleService {
             }else {
                 return new ResponseObject(IMessageService.ROLE_NOT_FOUND);
             }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject roleSearch(String keyword) {
+        try {
+            List<Role> roleSearch = iRoleRepository.findByRoleNameContainingIgnoreCase(keyword);
+            return new ResponseObject(roleSearch);
         }catch (Exception exception){
             throw new HandleException(exception);
         }

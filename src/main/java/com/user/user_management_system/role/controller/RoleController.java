@@ -47,4 +47,12 @@ public class RoleController {
             return new ResponseObject(exception);
         }
     }
+    @GetMapping("/search")
+    public ResponseObject roleSearch(@RequestParam String keyword){
+        try {
+            return iRoleService.roleSearch(keyword);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }

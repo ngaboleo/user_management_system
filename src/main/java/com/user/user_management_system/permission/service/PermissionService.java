@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 @Service
@@ -70,6 +71,16 @@ public class PermissionService implements IPermissionService{
             }else {
                 return new ResponseObject(IMessageService.PERMISSION_NOT_FOUND);
             }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject searchPermission(String keyword) {
+        try {
+            List<Permission> permissionSearch =iPermissionRepository.findByPermissionNameContainingIgnoreCase(keyword);
+            return new ResponseObject(permissionSearch);
         }catch (Exception exception){
             throw new HandleException(exception);
         }

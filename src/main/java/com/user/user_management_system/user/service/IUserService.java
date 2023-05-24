@@ -18,6 +18,8 @@ public interface IUserService {
     ResponseObject updatePassword(UpdatePasswordDto updatePasswordDto);
     ResponseObject resetPassword(String email);
     ResponseObject changePassword(String token, String newPassword);
+    ResponseObject userSearch(String keyword);
     ResponseObject sendOtp(String email);
     ResponseObject findAllUsersByOffice(UUID officeId, Integer pageNumber, Integer pageSize);
+
 }

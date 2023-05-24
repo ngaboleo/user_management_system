@@ -11,5 +11,6 @@ public interface IRoleService {
     ResponseObject updateRole(UUID role_id, RoleDto roleDto);
     ResponseObject getAllRoles(Integer pageNumber, Integer pageSize);
     ResponseObject disableRole(UUID id, RoleDto roleDto);
+    ResponseObject roleSearch(String keyword);
 
 }

@@ -26,6 +26,7 @@ import org.apache.commons.text.RandomStringGenerator;
 import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -36,6 +37,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.random.RandomGenerator;
 
@@ -61,6 +64,9 @@ public class UserService implements IUserService{
     @Autowired
     private IResetLinkerRepository iResetLinkerRepository;
     private Set<Role> roles = new HashSet<>();
+
+    @Value("${expirationDate}")
+    private Long expirationDate;
 
 
 
@@ -254,8 +260,11 @@ public class UserService implements IUserService{
     @Override
     public ResponseObject changePassword(String token, String newPassword) {
         try {
+            LocalDateTime expirationDateTime = LocalDateTime.now().plusMinutes(expirationDate);
+            Date tokenExpirationDate = Date.from(expirationDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            Date currentDateTime = new Date();
             Optional<ResetLinker> resetLinkerOptional = iResetLinkerRepository.findResetLinkerByTokenIgnoreCase(token);
-            if (resetLinkerOptional.isPresent()){
+            if (resetLinkerOptional.isPresent() && tokenExpirationDate.after(currentDateTime)){
                 Optional<User> userOptional = iUserRepository.findUserById(resetLinkerOptional.get().getUser().getId());
                 User user = userOptional.get();
                 user.setPassword(passwordEncoder.encode(newPassword));
@@ -265,6 +274,16 @@ public class UserService implements IUserService{
             }else {
                 throw new HandleException(IMessageService.TOKEN_NOT_VALID);
             }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject userSearch(String keyword) {
+        try {
+            List<User> userSearch = iUserRepository.findByFullNameContainingIgnoreCase(keyword);
+            return new ResponseObject(userSearch);
         }catch (Exception exception){
             throw new HandleException(exception);
         }

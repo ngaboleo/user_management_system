@@ -10,4 +10,5 @@ public interface IPermissionService {
     ResponseObject updatePermission(UUID id, PermissionDto permissionDto);
     ResponseObject getAllPermission(Integer pageNumber, Integer pageSize);
     ResponseObject disablePermission(UUID id, PermissionDto permissionDto);
+    ResponseObject searchPermission(String keyword);
 }
