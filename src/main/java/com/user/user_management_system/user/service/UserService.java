@@ -263,11 +263,8 @@ public class UserService implements IUserService{
         try {
             Optional<ResetLinker> resetLinkerOptional = iResetLinkerRepository.findResetLinkerByTokenIgnoreCase(token);
             Date createAt = resetLinkerOptional.get().getCreatedAt();
-            System.out.println(createAt);
             Date expirationForToken = Date.from(createAt.toInstant().plus(Duration.ofMinutes(expirationDate)));
-            System.out.println(expirationForToken);
             LocalDateTime currentDateTime = LocalDateTime.now();
-            System.out.println(currentDateTime);
             Date currentTime = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
             if (resetLinkerOptional.isPresent()){
                 if (!expirationForToken.before(currentTime)){
