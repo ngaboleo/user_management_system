@@ -11,6 +11,8 @@ public interface IMessageService {
     String PERMISSION_NOT_FOUND= "permission.notFound";
     String EMAIL_SEND = "email.sent.successfully";
     String TOKEN_NOT_VALID = "token.not.valid";
+    String OTP_IS_NOT_VALID = "otp.isNot.valid";
+    String OTP_IS_NOT_IDENTICAL = "otp.isNot.identical";
 
     String translate(String message);
 }

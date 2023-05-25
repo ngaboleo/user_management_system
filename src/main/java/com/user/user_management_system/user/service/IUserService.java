@@ -20,6 +20,7 @@ public interface IUserService {
     ResponseObject changePassword(String token, String newPassword);
     ResponseObject userSearch(String keyword);
     ResponseObject sendOtp(String email);
+    ResponseObject verifyOtp(String email, String otp);
     ResponseObject findAllUsersByOffice(UUID officeId, Integer pageNumber, Integer pageSize);
 
 }

@@ -8,10 +8,7 @@ import com.user.user_management_system.office.model.Office;
 import com.user.user_management_system.role.model.IRoleRepository;
 import com.user.user_management_system.role.model.Role;
 import com.user.user_management_system.user.auth.UserImplDetailService;
-import com.user.user_management_system.user.dto.LoginRequest;
-import com.user.user_management_system.user.dto.LoginResponseDto;
-import com.user.user_management_system.user.dto.UpdatePasswordDto;
-import com.user.user_management_system.user.dto.UserDto;
+import com.user.user_management_system.user.dto.*;
 import com.user.user_management_system.user.model.IResetLinkerRepository;
 import com.user.user_management_system.user.model.IUserRepository;
 import com.user.user_management_system.user.model.ResetLinker;
@@ -37,6 +34,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
+import javax.swing.*;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -142,8 +141,13 @@ public class UserService implements IUserService{
             if (optionalUser.isPresent()){
                 User loggedUser = optionalUser.get();
                 if (loggedUser.getIsActive()){
-                    final String token = tokenUtil.generateToken(userDetails);
-                    return new ResponseObject(new LoginResponseDto(token, loggedUser));
+                    if (!loggedUser.getOtp().isEmpty()){
+                        sendOtp(loggedUser.getEmail());
+                        final String token = tokenUtil.generateToken(userDetails);
+                        return new ResponseObject(new LoginResponseDto(token, loggedUser));
+                    }else {
+                        throw new HandleException(IMessageService.OTP_IS_NOT_VALID);
+                    }
                 }else {
                     return new ResponseObject("Please active this account!!" +loggedUser.getEmail());
                 }
@@ -297,7 +301,40 @@ public class UserService implements IUserService{
 
     @Override
     public ResponseObject sendOtp(String email) {
-        return null;
+        try {
+            User user = iUserRepository.findUserByEmailIgnoreCase(email).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND));
+            if (ObjectUtils.isNotEmpty(user.getEmail())){
+                user.setOtp(String.valueOf(this.generateOtp()));
+                iUserRepository.save(user);
+                iEmailSenderService.sendEmail(user.getEmail(), "otp ", "the one time password you have to use: " +user.getOtp());
+                return new ResponseObject(user);
+            }else {
+                throw new HandleException(IMessageService.USERNAME_NOT_FOUND);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    @Override
+    public ResponseObject verifyOtp(String email, String otp) {
+        try {
+            User user = iUserRepository.findUserByEmailIgnoreCase(email).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND));
+            final UserDetails userDetails = userImplDetailService.loadUserByUsername(email);
+            if (user.getOtp().equals(otp)){
+                final String token = tokenUtil.generateToken(userDetails);
+                return new ResponseObject(new LoginResponseDto(token, user));
+            }else {
+                throw new HandleException(IMessageService.OTP_IS_NOT_VALID);
+            }
+        }catch (Exception exception){
+            throw new HandleException(exception);
+        }
+    }
+
+    private int generateOtp() {
+        SecureRandom secureRandom = new SecureRandom();
+        return (secureRandom.nextInt(899999) + 100000);
     }
 
     @Override

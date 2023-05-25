@@ -96,4 +96,21 @@ public class UserController {
             return new ResponseObject(exception);
         }
     }
+    @PutMapping("/user/sendOtp")
+    public ResponseObject sendOtp(@RequestParam String email){
+        try {
+            return userService.sendOtp(email);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
+
+    @GetMapping("/user/verify/otp")
+    public ResponseObject verifyOtp(@RequestHeader String email, @RequestHeader String otp){
+        try {
+            return userService.verifyOtp(email, otp);
+        }catch (Exception exception){
+            return new ResponseObject(exception);
+        }
+    }
 }
