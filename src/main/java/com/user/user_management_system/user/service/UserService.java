@@ -67,6 +67,8 @@ public class UserService implements IUserService{
 
     @Value("${expirationDate}")
     private Long expirationDate;
+    @Value("${otpExpirationTime}")
+    private Long otpTime;
 
 
 
@@ -302,6 +304,8 @@ public class UserService implements IUserService{
     @Override
     public ResponseObject sendOtp(String email) {
         try {
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            Date currentTime = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
             User user = iUserRepository.findUserByEmailIgnoreCase(email).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND));
             if (ObjectUtils.isNotEmpty(user.getEmail())){
                 user.setOtp(String.valueOf(this.generateOtp()));
@@ -321,9 +325,14 @@ public class UserService implements IUserService{
         try {
             User user = iUserRepository.findUserByEmailIgnoreCase(email).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND));
             final UserDetails userDetails = userImplDetailService.loadUserByUsername(email);
-            if (user.getOtp().equals(otp)){
-                final String token = tokenUtil.generateToken(userDetails);
-                return new ResponseObject(new LoginResponseDto(token, user));
+
+            Date updateAt = user.getUpdateAt();
+            Date otpExpirationTime = Date.from(updateAt.toInstant().plus(Duration.ofMinutes(otpTime)));
+            LocalDateTime currentDateTime = LocalDateTime.now();
+            Date currentTime = Date.from(currentDateTime.atZone(ZoneId.systemDefault()).toInstant());
+            if (user.getOtp().equals(otp) && !otpExpirationTime.before(currentTime)){
+                    final String token = tokenUtil.generateToken(userDetails);
+                    return new ResponseObject(new LoginResponseDto(token, user));
             }else {
                 throw new HandleException(IMessageService.OTP_IS_NOT_VALID);
             }
