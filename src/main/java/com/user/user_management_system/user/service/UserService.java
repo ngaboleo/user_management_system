@@ -143,13 +143,9 @@ public class UserService implements IUserService{
             if (optionalUser.isPresent()){
                 User loggedUser = optionalUser.get();
                 if (loggedUser.getIsActive()){
-                    if (!loggedUser.getOtp().isEmpty()){
                         sendOtp(loggedUser.getEmail());
                         final String token = tokenUtil.generateToken(userDetails);
                         return new ResponseObject(new LoginResponseDto(token, loggedUser));
-                    }else {
-                        throw new HandleException(IMessageService.OTP_IS_NOT_VALID);
-                    }
                 }else {
                     return new ResponseObject("Please active this account!!" +loggedUser.getEmail());
                 }
@@ -325,7 +321,6 @@ public class UserService implements IUserService{
         try {
             User user = iUserRepository.findUserByEmailIgnoreCase(email).orElseThrow(() -> new HandleException(IMessageService.USER_NOT_FOUND));
             final UserDetails userDetails = userImplDetailService.loadUserByUsername(email);
-
             Date updateAt = user.getUpdateAt();
             Date otpExpirationTime = Date.from(updateAt.toInstant().plus(Duration.ofMinutes(otpTime)));
             LocalDateTime currentDateTime = LocalDateTime.now();
