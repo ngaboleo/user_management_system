@@ -39,7 +39,7 @@ public class User extends CommonUser {
     private Boolean isEnabled;
     @Enumerated(EnumType.STRING)
     private OtpChannel otpChannel;
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinColumn(name = "role_id")
     private Set<Role> roles = new HashSet<>();
     @ManyToOne

@@ -1,9 +1,13 @@
 package com.user.user_management_system.user.auth;
 
+import com.user.user_management_system.role.model.IRoleRepository;
+import com.user.user_management_system.user.model.IUserRepository;
+import com.user.user_management_system.user.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Role;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -17,6 +21,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import java.util.Optional;
+
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
@@ -27,6 +33,9 @@ public class SecurityConfig{
     @Autowired
     private final AuthenticationFilter authenticationFilter;
 
+    
+
+
 
     @Bean
     public SecurityFilterChain filterChain (HttpSecurity http) throws Exception{
@@ -36,7 +45,8 @@ public class SecurityConfig{
         http.cors().and().csrf().disable().
                 authorizeHttpRequests()
                     .requestMatchers("/admin/**").permitAll()
-                .requestMatchers("/office/**", "/permission/**", "/role/**").permitAll()
+                .and().authorizeHttpRequests()
+                .requestMatchers("/office/**", "/permission/**", "/role/**").hasAuthority("standard user")
                     .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

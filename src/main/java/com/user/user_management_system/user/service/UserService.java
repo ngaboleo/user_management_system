@@ -144,8 +144,8 @@ public class UserService implements IUserService{
                 User loggedUser = optionalUser.get();
                 if (loggedUser.getIsActive()){
                         sendOtp(loggedUser.getEmail());
-                        final String token = tokenUtil.generateToken(userDetails);
-                        return new ResponseObject(new LoginResponseDto(token, loggedUser));
+//                        final String token = tokenUtil.generateToken(userDetails);
+                        return new ResponseObject("this is your otp to verify your account: " +loggedUser.getOtp());
                 }else {
                     return new ResponseObject("Please active this account!!" +loggedUser.getEmail());
                 }
@@ -167,7 +167,7 @@ public class UserService implements IUserService{
                 user.setIsActive(true);
                 iUserRepository.save(user);
             }
-            return login(new LoginRequest(email, password));
+            return new ResponseObject(new LoginRequest(email, password));
         }catch (Exception exception){
             throw new HandleException(exception);
         }

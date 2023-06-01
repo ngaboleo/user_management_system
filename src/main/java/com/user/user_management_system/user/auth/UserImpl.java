@@ -10,15 +10,22 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
+ @AllArgsConstructor
 public class UserImpl implements UserDetails {
 
     private User user;
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority(user.getRoles().toString()));
+        Set<GrantedAuthority> grantedAuthorities = user.getRoles().stream()
+                .map(role -> new SimpleGrantedAuthority(role.getRoleName()))
+                .collect(Collectors.toSet());
+        return grantedAuthorities;
     }
 
     @Override
